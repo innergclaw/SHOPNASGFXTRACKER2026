@@ -421,6 +421,14 @@
                 <input type="text" id="editBusiness" placeholder="Business name">
             </div>
             <div class="field">
+                <label>Email</label>
+                <input type="email" id="editEmail" placeholder="client@example.com">
+            </div>
+            <div class="field">
+                <label>Phone</label>
+                <input type="text" id="editPhone" placeholder="267 555 1234">
+            </div>
+            <div class="field">
                 <label>Service</label>
                 <select id="editService">
                     <option value="Logo Design">Logo Design</option>
@@ -450,6 +458,14 @@
             <div class="field">
                 <label>Notes</label>
                 <textarea id="editNotes" placeholder="Internal notes..."></textarea>
+            </div>
+            <div class="field">
+                <label>Service Details</label>
+                <textarea id="editServiceDetails" placeholder="Package scope, deliverables, pricing notes, or custom service details..."></textarea>
+            </div>
+            <div class="field">
+                <label>SMS Reach Out</label>
+                <textarea id="editSmsReachOut" placeholder="First-person SMS script for follow-up..."></textarea>
             </div>
             <div class="field">
                 <label>Tracker Slug (for URL)</label>
@@ -569,6 +585,8 @@
                         <div class="client-business">${esc(p.business) || '—'}</div>
                         <div class="client-service">${esc(p.service)}</div>
                         <div class="client-meta">
+                            ${p.phone ? `<span>📱 ${esc(p.phone)}</span>` : ''}
+                            ${p.email ? `<span>✉️ ${esc(p.email)}</span>` : ''}
                             <span>💰 $${(p.deposit || 0).toLocaleString()} paid</span>
                             ${p.amount > p.deposit ? `<span>⏳ $${((p.amount || 0) - (p.deposit || 0)).toLocaleString()} remaining</span>` : '<span>✅ Fully paid</span>'}
                             <span>📅 ${p.date || '—'}</span>
@@ -595,10 +613,14 @@
             document.getElementById('editId').value = '';
             document.getElementById('editName').value = '';
             document.getElementById('editBusiness').value = '';
+            document.getElementById('editEmail').value = '';
+            document.getElementById('editPhone').value = '';
             document.getElementById('editService').value = 'Logo Design';
             document.getElementById('editAmount').value = '';
             document.getElementById('editStage').value = 'Received';
             document.getElementById('editNotes').value = '';
+            document.getElementById('editServiceDetails').value = '';
+            document.getElementById('editSmsReachOut').value = '';
             document.getElementById('editSlug').value = '';
             document.querySelector('.modal-actions .delete').style.display = 'none';
             document.getElementById('modalOverlay').classList.add('active');
@@ -612,10 +634,14 @@
             document.getElementById('editId').value = p.id;
             document.getElementById('editName').value = p.name;
             document.getElementById('editBusiness').value = p.business || '';
+            document.getElementById('editEmail').value = p.email || '';
+            document.getElementById('editPhone').value = p.phone || '';
             document.getElementById('editService').value = p.service;
             document.getElementById('editAmount').value = p.amount;
             document.getElementById('editStage').value = p.stage;
             document.getElementById('editNotes').value = p.notes || '';
+            document.getElementById('editServiceDetails').value = p.serviceDetails || '';
+            document.getElementById('editSmsReachOut').value = p.smsReachOut || '';
             document.getElementById('editSlug').value = p.slug || '';
             document.querySelector('.modal-actions .delete').style.display = '';
             document.getElementById('modalOverlay').classList.add('active');
@@ -634,11 +660,15 @@
                 id: id || genId(),
                 name: name,
                 business: document.getElementById('editBusiness').value.trim(),
+                email: document.getElementById('editEmail').value.trim(),
+                phone: document.getElementById('editPhone').value.trim(),
                 service: document.getElementById('editService').value,
                 amount: parseFloat(document.getElementById('editAmount').value) || 0,
                 deposit: id ? (getProjects().find(x => x.id === id) || {}).deposit || 0 : 0,
                 stage: document.getElementById('editStage').value,
                 notes: document.getElementById('editNotes').value.trim(),
+                serviceDetails: document.getElementById('editServiceDetails').value.trim(),
+                smsReachOut: document.getElementById('editSmsReachOut').value.trim(),
                 slug: document.getElementById('editSlug').value.trim().toLowerCase().replace(/\s+/g, '-'),
                 date: id ? (getProjects().find(x => x.id === id) || {}).date : new Date().toISOString().split('T')[0]
             };
@@ -671,8 +701,23 @@
         function exportData() {
             const projects = getProjects();
             const csv = [
-                ['Name', 'Business', 'Service', 'Amount', 'Paid', 'Remaining', 'Stage', 'Date', 'Slug', 'Notes'],
-                ...projects.map(p => [p.name, p.business, p.service, p.amount, p.deposit, (p.amount - p.deposit), p.stage, p.date, p.slug, `"${(p.notes || '').replace(/"/g, '""')}"`])
+                ['Name', 'Business', 'Email', 'Phone', 'Service', 'Service Details', 'SMS Reach Out', 'Amount', 'Paid', 'Remaining', 'Stage', 'Date', 'Slug', 'Notes'],
+                ...projects.map(p => [
+                    p.name,
+                    p.business,
+                    p.email || '',
+                    p.phone || '',
+                    p.service,
+                    `"${(p.serviceDetails || '').replace(/"/g, '""')}"`,
+                    `"${(p.smsReachOut || '').replace(/"/g, '""')}"`,
+                    p.amount,
+                    p.deposit,
+                    (p.amount - p.deposit),
+                    p.stage,
+                    p.date,
+                    p.slug,
+                    `"${(p.notes || '').replace(/"/g, '""')}"`
+                ])
             ].map(r => r.join(',')).join('\n');
 
             const blob = new Blob([csv], { type: 'text/csv' });
